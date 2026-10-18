@@ -1,0 +1,108 @@
+import { useRef, useState } from 'react'
+import Icon from './Icon.jsx'
+import { setSetting } from '../db.js'
+import { makeT } from '../i18n.js'
+import { exportBackup, importBackup, resetAllData, shareBackup } from '../utils/backup.js'
+
+export default function SettingsTab({ lang, onClose }) {
+  const t = makeT(lang)
+  const fileRef = useRef(null)
+  const [msg, setMsg] = useState('')
+  const [shareErr, setShareErr] = useState(false)
+
+  const flash = (text) => {
+    setMsg(text)
+    setTimeout(() => setMsg(''), 3000)
+  }
+
+  const doShare = async () => {
+    setShareErr(false)
+    try {
+      const ok = await shareBackup()
+      if (!ok) setShareErr(true)
+    } catch {
+      /* user cancelled share sheet */
+    }
+  }
+
+  return (
+    <div className="settings">
+      <header className="page-head">
+        <div>
+          <span className="eyebrow">⚙️</span>
+          <h2>{t('settings')}</h2>
+        </div>
+        {onClose && (
+          <button type="button" className="icon-btn" onClick={onClose} aria-label={t('cancel')}>
+            <Icon name="close" size={18} />
+          </button>
+        )}
+      </header>
+
+      {msg && <div className="toast">{msg}</div>}
+
+      <section className="card">
+        <h3 className="card-title">{t('language')}</h3>
+        <div className="segmented">
+          <button
+            type="button"
+            className={lang === 'hi' ? 'active' : ''}
+            onClick={() => setSetting('lang', 'hi')}
+          >
+            हिंदी
+          </button>
+          <button
+            type="button"
+            className={lang === 'en' ? 'active' : ''}
+            onClick={() => setSetting('lang', 'en')}
+          >
+            English
+          </button>
+        </div>
+      </section>
+
+      <section className="card">
+        <h3 className="card-title">{t('dataBackup')}</h3>
+        <p className="hint">{t('helperHint')}</p>
+        <div className="btn-col">
+          <button type="button" className="btn btn-outline" onClick={() => exportBackup()}>
+            ⬇️ {t('exportB')}
+          </button>
+          <button type="button" className="btn btn-outline" onClick={() => fileRef.current?.click()}>
+            ⬆️ {t('importB')}
+          </button>
+          <button type="button" className="btn btn-primary" onClick={doShare}>
+            <Icon name="share" size={16} /> {t('shareB')}
+          </button>
+          {shareErr && (
+            <p className="hint">
+              {lang === 'hi'
+                ? 'इस ब्राउज़र में शेयर उपलब्ध नहीं — एक्सपोर्ट फ़ाइल WhatsApp से भेजें।'
+                : 'Share not available in this browser — send the exported file via WhatsApp.'}
+            </p>
+          )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json"
+            hidden
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              e.target.value = ''
+              if (!file) return
+              try {
+                const ok = await importBackup(file)
+                if (ok) flash(lang === 'hi' ? 'बैकअप रिस्टोर हो गया ✓' : 'Backup restored ✓')
+              } catch (err) {
+                window.alert(`Import failed: ${err.message}`)
+              }
+            }}
+          />
+          <button type="button" className="btn btn-danger-outline" onClick={() => resetAllData()}>
+            🗑️ {t('resetAll')}
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
