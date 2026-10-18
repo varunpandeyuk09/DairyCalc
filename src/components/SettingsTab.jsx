@@ -67,6 +67,29 @@ export default function SettingsTab({ lang, settings = {}, onClose }) {
     flash(t('pinSaved'))
   }
 
+  const workerUrl = `${window.location.origin}${window.location.pathname}?mode=worker&pin=${pin}`
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(workerUrl)
+      flash(t('linkCopied'))
+    } catch {
+      window.prompt(t('copyLink'), workerUrl)
+    }
+  }
+
+  const shareLink = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Dairy Calc — worker link', url: workerUrl })
+        return
+      }
+    } catch {
+      return /* user cancelled */
+    }
+    copyLink()
+  }
+
   return (
     <div className="settings">
       <header className="page-head">
@@ -163,6 +186,18 @@ export default function SettingsTab({ lang, settings = {}, onClose }) {
                 />
                 <button type="button" className="btn btn-outline btn-sm" onClick={doChangePin}>
                   {t('changePin')}
+                </button>
+              </div>
+            </div>
+            <div className="worker-link">
+              <h4>{t('workerLink')}</h4>
+              <p className="hint">{t('workerLinkHint')}</p>
+              <div className="inline-form">
+                <button type="button" className="btn btn-outline btn-sm" onClick={copyLink}>
+                  📋 {t('copyLink')}
+                </button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={shareLink}>
+                  📤 {t('shareLink')}
                 </button>
               </div>
             </div>

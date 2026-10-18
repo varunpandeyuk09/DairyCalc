@@ -560,6 +560,21 @@ h3 {
   width: 110px;
 }
 
+.worker-link {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.worker-link h4 {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+}
+
+.worker-link .hint {
+  margin: 0 0 10px;
+}
+
 .emoji-row {
   display: flex;
   flex-wrap: wrap;

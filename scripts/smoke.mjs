@@ -161,6 +161,22 @@ check(
   (await page.locator('.settings .btn-outline', { hasText: 'Import' }).count()) === 1,
 )
 
+// ---- 10) worker link provisions a fresh device into locked mode ----
+const p2 = await browser.newPage({ viewport: { width: 390, height: 844 } })
+await p2.goto(`${URL}?mode=worker&pin=4321`, { waitUntil: 'networkidle' })
+await p2.waitForSelector('.app', { timeout: 15000 })
+check('worker link: url cleaned of pin', !p2.url().includes('pin='))
+await p2.locator('.bottom-nav button', { hasText: /Products|प्रोडक्ट/ }).click()
+await p2.waitForTimeout(400)
+check('worker link: products read-only', (await p2.locator('.products .card-title').count()) === 0)
+await p2.locator('.top-actions .icon-btn').click()
+await p2.waitForSelector('.settings', { timeout: 3000 })
+check(
+  'worker link: settings asks for PIN',
+  (await p2.locator('.settings .btn-primary.btn-sm', { hasText: /Unlock|अनलॉक/ }).count()) === 1,
+)
+await p2.close()
+
 check('no console/page errors', errors.length === 0, JSON.stringify(errors, null, 2))
 
 await browser.close()
