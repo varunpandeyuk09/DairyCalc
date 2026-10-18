@@ -10,7 +10,10 @@ import { makeT } from './i18n.js'
 
 export default function App() {
   const [view, setView] = useState('calc')
-  const lang = useLiveQuery(() => db.settings.get('lang').then((r) => r?.value), [], 'hi')
+  const settingRows = useLiveQuery(() => db.settings.toArray(), []) || []
+  const settings = Object.fromEntries(settingRows.map((r) => [r.key, r.value]))
+  const lang = settings.lang || 'hi'
+  const locked = !!settings.locked
   const t = makeT(lang)
 
   useEffect(() => {
@@ -47,8 +50,10 @@ export default function App() {
       <main>
         {view === 'calc' && <Calculator lang={lang} />}
         {view === 'register' && <Register lang={lang} />}
-        {view === 'products' && <Products lang={lang} />}
-        {view === 'settings' && <SettingsTab lang={lang} onClose={() => setView('calc')} />}
+        {view === 'products' && <Products lang={lang} locked={locked} />}
+        {view === 'settings' && (
+          <SettingsTab lang={lang} settings={settings} onClose={() => setView('calc')} />
+        )}
       </main>
 
       <nav className="bottom-nav">

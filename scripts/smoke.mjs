@@ -1,4 +1,5 @@
 import { chromium } from 'playwright-core'
+import fs from 'node:fs'
 
 const CHROME =
   process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe'
@@ -17,6 +18,11 @@ const check = (name, cond, detail = '') => {
 
 const browser = await chromium.launch({ executablePath: CHROME, headless: true })
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
+
+function todayISO() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 page.on('console', (m) => {
   if (m.type() === 'error') errors.push(m.text())
 })
@@ -65,7 +71,51 @@ check(
   await page.locator('.stat-value.accent').innerText(),
 )
 
-// ---- 5) language toggle -> English ----
+// ---- 5) merge import: worker's backup adds entries, keeps old ones ----
+const backup = {
+  app: 'dairy-calc',
+  version: 1,
+  products: [{ nameHi: 'मलाई', nameEn: 'Malai', emoji: '🍦', rate: 200 }],
+  entries: [
+    {
+      date: todayISO(),
+      productId: 999,
+      nameHi: 'मलाई',
+      nameEn: 'Malai',
+      emoji: '🍦',
+      rate: 200,
+      rupees: 40,
+      grams: 200,
+      createdAt: 1111111111111,
+    },
+    {
+      date: todayISO(),
+      productId: 1,
+      nameHi: 'दूध',
+      nameEn: 'Milk',
+      emoji: '🥛',
+      rate: 60,
+      rupees: 60,
+      grams: 1000,
+      createdAt: 2222222222222,
+    },
+  ],
+  settings: [],
+}
+const backupPath = 'test-backup.json'
+fs.writeFileSync(backupPath, JSON.stringify(backup))
+await page.locator('.top-actions .icon-btn').click()
+await page.waitForSelector('.settings', { timeout: 3000 })
+page.once('dialog', (d) => d.accept())
+await page.locator('.settings input[type="file"]').setInputFiles(backupPath)
+await page.waitForTimeout(900)
+await page.locator('.bottom-nav button', { hasText: 'बही' }).click()
+await page.waitForTimeout(300)
+const mergedCount = await page.locator('.entry-row').count()
+check('merge import keeps old + adds new entries', mergedCount === 3, `(${mergedCount} entries)`)
+fs.unlinkSync(backupPath)
+
+// ---- 6) language toggle -> English ----
 await page.locator('.lang-chip').click()
 await page.waitForTimeout(400)
 check(
@@ -74,11 +124,42 @@ check(
   await page.locator('.brand h1').innerText(),
 )
 
-// ---- 6) products tab shows add form ----
+// ---- 7) products tab shows add form ----
 await page.locator('.bottom-nav button', { hasText: 'Products' }).click()
 await page.waitForSelector('.products', { timeout: 3000 })
 await page.locator('.products .input').first().fill('Curd Fresh')
 check('add form present', (await page.locator('.products .btn-primary').count()) > 0)
+
+// ---- 8) owner lock: worker mode hides product edits ----
+await page.locator('.top-actions .icon-btn').click()
+await page.waitForSelector('.settings', { timeout: 3000 })
+await page.locator('.settings .input.small').first().fill('1234')
+await page
+  .locator('.settings .card', { hasText: 'Owner lock' })
+  .locator('.btn-primary.btn-sm')
+  .click()
+await page.waitForTimeout(300)
+await page.locator('.settings .btn-primary', { hasText: 'Lock now' }).click()
+await page.waitForTimeout(300)
+await page.locator('.bottom-nav button', { hasText: 'Products' }).click()
+await page.waitForTimeout(300)
+check('locked: add form hidden', (await page.locator('.products .card-title').count()) === 0)
+check('locked: edit buttons hidden', (await page.locator('.products .btn-outline.btn-sm').count()) === 0)
+
+// ---- 9) unlock requires correct PIN ----
+await page.locator('.top-actions .icon-btn').click()
+await page.waitForSelector('.settings', { timeout: 3000 })
+await page.locator('.settings .input.small').first().fill('9999')
+await page.locator('.settings .btn-primary.btn-sm', { hasText: 'Unlock' }).click()
+await page.waitForTimeout(200)
+check('wrong pin stays locked', await page.locator('.settings .error').isVisible())
+await page.locator('.settings .input.small').first().fill('1234')
+await page.locator('.settings .btn-primary.btn-sm', { hasText: 'Unlock' }).click()
+await page.waitForTimeout(300)
+check(
+  'unlocked: import visible again',
+  (await page.locator('.settings .btn-outline', { hasText: 'Import' }).count()) === 1,
+)
 
 check('no console/page errors', errors.length === 0, JSON.stringify(errors, null, 2))
 

@@ -552,6 +552,14 @@ h3 {
   align-items: center;
 }
 
+.lock-form {
+  margin-top: 10px;
+}
+
+.lock-form .input.small {
+  width: 110px;
+}
+
 .emoji-row {
   display: flex;
   flex-wrap: wrap;

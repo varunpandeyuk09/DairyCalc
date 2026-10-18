@@ -4,7 +4,7 @@ import { db } from '../db.js'
 import { makeT, productName } from '../i18n.js'
 import { EMOJI_CHOICES, guessEmoji } from '../utils/format.js'
 
-export default function Products({ lang }) {
+export default function Products({ lang, locked }) {
   const t = makeT(lang)
   const products = useLiveQuery(() => db.products.orderBy('id').toArray(), []) || []
 
@@ -48,58 +48,61 @@ export default function Products({ lang }) {
 
   return (
     <div className="products">
-      <section className="card">
-        <h3 className="card-title">{t('addProductTitle')}</h3>
-        <label className="field-label">{t('nameHi')}</label>
-        <input
-          className="input"
-          placeholder="जैसे दूध"
-          value={nameHi}
-          onChange={(e) => {
-            setNameHi(e.target.value)
-            setError('')
-          }}
-        />
-        <label className="field-label">{t('nameEn')}</label>
-        <input
-          className="input"
-          placeholder="e.g. Milk"
-          value={nameEn}
-          onChange={(e) => {
-            setNameEn(e.target.value)
-            setError('')
-          }}
-        />
-        <label className="field-label">{t('rateLabel')}</label>
-        <input
-          className="input"
-          type="text"
-          inputMode="decimal"
-          placeholder="60"
-          value={rate}
-          onChange={(e) => {
-            setRate(e.target.value.replace(/[^0-9.]/g, ''))
-            setError('')
-          }}
-        />
-        <label className="field-label">{t('emoji')}</label>
-        <div className="emoji-row">
-          {EMOJI_CHOICES.map((em) => (
-            <button
-              key={em}
-              type="button"
-              className={`emoji-chip ${emoji === em ? 'active' : ''}`}
-              onClick={() => setEmoji(em)}
-            >
-              {em}
-            </button>
-          ))}
-        </div>
-        {error && <p className="error">{error}</p>}
-        <button type="button" className="btn btn-primary full" onClick={add}>
-          {t('add')}
-        </button>
-      </section>
+      {locked && <p className="hint">{t('readOnlyNotice')}</p>}
+      {!locked && (
+        <section className="card">
+          <h3 className="card-title">{t('addProductTitle')}</h3>
+          <label className="field-label">{t('nameHi')}</label>
+          <input
+            className="input"
+            placeholder="जैसे दूध"
+            value={nameHi}
+            onChange={(e) => {
+              setNameHi(e.target.value)
+              setError('')
+            }}
+          />
+          <label className="field-label">{t('nameEn')}</label>
+          <input
+            className="input"
+            placeholder="e.g. Milk"
+            value={nameEn}
+            onChange={(e) => {
+              setNameEn(e.target.value)
+              setError('')
+            }}
+          />
+          <label className="field-label">{t('rateLabel')}</label>
+          <input
+            className="input"
+            type="text"
+            inputMode="decimal"
+            placeholder="60"
+            value={rate}
+            onChange={(e) => {
+              setRate(e.target.value.replace(/[^0-9.]/g, ''))
+              setError('')
+            }}
+          />
+          <label className="field-label">{t('emoji')}</label>
+          <div className="emoji-row">
+            {EMOJI_CHOICES.map((em) => (
+              <button
+                key={em}
+                type="button"
+                className={`emoji-chip ${emoji === em ? 'active' : ''}`}
+                onClick={() => setEmoji(em)}
+              >
+                {em}
+              </button>
+            ))}
+          </div>
+          {error && <p className="error">{error}</p>}
+          <button type="button" className="btn btn-primary full" onClick={add}>
+            {t('add')}
+          </button>
+        </section>
+      )}
 
       <section className="card">
         {products.map((p) => (
@@ -131,7 +134,7 @@ export default function Products({ lang }) {
                 </span>
               )}
             </div>
-            {editId !== p.id && (
+            {!locked && editId !== p.id && (
               <>
                 <button
                   type="button"

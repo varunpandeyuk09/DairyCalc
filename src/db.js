@@ -10,6 +10,8 @@ db.version(1).stores({
 
 export const DEFAULT_SETTINGS = {
   lang: 'hi',
+  pin: '',
+  locked: false,
 }
 
 export const DEFAULT_PRODUCTS = [
