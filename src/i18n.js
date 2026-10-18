@@ -55,7 +55,7 @@ const STRINGS = {
     pinSaved: 'PIN सेव हो गया ✓',
     workerLink: 'वर्कर लिंक',
     workerLinkHint:
-      'Yeh link helper ke phone mein kholne par app worker mode mein locked khulega. Best: ye QR apne phone par dikhayein aur helper se scan karwaye — PIN link mein hota hai, dikh matne dein.',
+      'Is link se helper ke phone mein app worker mode mein locked khulega. Link mein PIN ya "worker" jaisa koi shabd nahi hota — bas ek aam referral code jaisa maamuli code dikhta hai. Best: QR dikhayein aur helper se scan karwaye.',
     copyLink: 'लिंक कॉपी करें',
     shareLink: 'लिंक शेयर करें',
     linkCopied: 'लिंक कॉपी हो गया ✓',
@@ -119,7 +119,7 @@ const STRINGS = {
     pinSaved: 'PIN saved ✓',
     workerLink: 'Worker link',
     workerLinkHint:
-      'When the helper opens this link on their phone, the app starts locked in worker mode. Best: show this QR from your phone and let them scan it — the PIN is inside the link, do not let them read it.',
+      'Opening this link on the helper\u2019s phone starts the app locked in worker mode. The link contains no PIN and no words like "worker" — it just looks like a plain referral code. Best: show the QR and let them scan it.',
     copyLink: 'Copy link',
     shareLink: 'Share link',
     linkCopied: 'Link copied ✓',

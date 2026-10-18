@@ -162,10 +162,11 @@ check(
 )
 
 // ---- 10) worker link provisions a fresh device into locked mode ----
+const refCode = 'f3a9c1d8b7e6a5f4c3b2a19087654321fedcba9876543210abcdef0123456789'
 const p2 = await browser.newPage({ viewport: { width: 390, height: 844 } })
-await p2.goto(`${URL}?mode=worker&pin=4321`, { waitUntil: 'networkidle' })
+await p2.goto(`${URL}?ref=${refCode}`, { waitUntil: 'networkidle' })
 await p2.waitForSelector('.app', { timeout: 15000 })
-check('worker link: url cleaned of pin', !p2.url().includes('pin='))
+check('worker link: url cleaned of ref', !p2.url().includes('ref='))
 await p2.locator('.bottom-nav button', { hasText: /Products|प्रोडक्ट/ }).click()
 await p2.waitForTimeout(400)
 check('worker link: products read-only', (await p2.locator('.products .card-title').count()) === 0)

@@ -3,6 +3,7 @@ import Icon from './Icon.jsx'
 import { setSetting } from '../db.js'
 import { makeT } from '../i18n.js'
 import { exportBackup, importBackup, resetAllData, shareBackup } from '../utils/backup.js'
+import { hashPin, verifyPin } from '../utils/pin.js'
 
 export default function SettingsTab({ lang, settings = {}, onClose }) {
   const t = makeT(lang)
@@ -32,20 +33,20 @@ export default function SettingsTab({ lang, settings = {}, onClose }) {
     }
   }
 
-  const saveNewPin = () => {
+  const saveNewPin = async () => {
     const p = pinInput.trim()
     if (!/^\d{4}$/.test(p)) {
       setPinErr(lang === 'hi' ? 'ठीक 4 अंक डालें' : 'Enter exactly 4 digits')
       return
     }
-    setSetting('pin', p)
+    setSetting('pin', await hashPin(p))
     setPinInput('')
     setPinErr('')
     flash(t('pinSaved'))
   }
 
-  const doUnlock = () => {
-    if (pinInput.trim() === pin) {
+  const doUnlock = async () => {
+    if (await verifyPin(pinInput.trim(), pin)) {
       setSetting('locked', false)
       setPinInput('')
       setPinErr('')
@@ -54,20 +55,20 @@ export default function SettingsTab({ lang, settings = {}, onClose }) {
     }
   }
 
-  const doChangePin = () => {
-    if (oldPin.trim() !== pin) return setPinErr(t('wrongPin'))
+  const doChangePin = async () => {
+    if (!(await verifyPin(oldPin.trim(), pin))) return setPinErr(t('wrongPin'))
     if (!/^\d{4}$/.test(newPin.trim())) {
       setPinErr(lang === 'hi' ? 'ठीक 4 अंक डालें' : 'Enter exactly 4 digits')
       return
     }
-    setSetting('pin', newPin.trim())
+    setSetting('pin', await hashPin(newPin.trim()))
     setOldPin('')
     setNewPin('')
     setPinErr('')
     flash(t('pinSaved'))
   }
 
-  const workerUrl = `${window.location.origin}${window.location.pathname}?mode=worker&pin=${pin}`
+  const workerUrl = `${window.location.origin}${window.location.pathname}?ref=${pin}`
 
   const copyLink = async () => {
     try {
